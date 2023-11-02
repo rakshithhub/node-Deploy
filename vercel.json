@@ -20,7 +20,7 @@
             "dest": "index.js"
         },
         {
-            "src": "/add",
+            "src": "/card",
             "dest": "build/index.html"
         },
         {
