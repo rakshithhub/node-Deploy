@@ -1,6 +1,7 @@
 const model = require('../model/product');
 const Product = model.Product;
 
+
 exports.create = async(req, res) => {
     try{
         const product = await new Product(req.body);
@@ -11,9 +12,23 @@ exports.create = async(req, res) => {
     }
 }
 exports.getAll = async(req, res) => {
+    const pageSize = 4;
+    const page = req.query.page;
+
     try{
-        const products = await Product.find();
-        res.json(products);
+        if(req.query.sort){
+            const products = await Product.find().sort({[req.query.sort]: req.query.order}).skip((pageSize*(page-1))).limit(pageSize).exec();
+            res.json(products);
+        }
+        else if(req.query.page){
+        const products = await Product.find().skip((pageSize*(page-1))).limit(pageSize).exec();
+            res.json(products);
+        }
+        else{
+            const products = await Product.find().exec();
+            res.json(products);
+        }
+
     }catch(err){
         res.json(err);
     }

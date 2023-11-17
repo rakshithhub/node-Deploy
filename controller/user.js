@@ -1,11 +1,41 @@
 const model = require('../model/user');
 const User = model.User;
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const bcrypt = require('bcrypt');
+const path = require('path');
+
+const privateKey = fs.readFileSync(path.resolve(__dirname, '../private.key'), 'utf-8')
 
 exports.create = async(req,res) => {
     try{
         const user = new User(req.body);
+        const hash = bcrypt.hashSync(req.body.password, 10);
+
+        user.password = hash;
+
         await user.save();
-        res.json("Saved");
+        res.json(req.body);
+    }catch(err){
+        res.json(err.message);
+    }
+}
+exports.login = async(req,res) => {
+    const {email,password} = req.body;
+
+    try{
+        const user = await User.findOne({'email': email});
+        const token = jwt.sign({email: email},privateKey,{ algorithm: 'RS256' });
+        const hash = bcrypt.compareSync(password,user.password);
+
+        if(hash){
+            user.token = token;
+            await user.save();
+            res.json(user);
+        }else{
+            res.json("Not Found");
+        }
+        
     }catch(err){
         res.json(err.message);
     }
@@ -22,7 +52,9 @@ exports.getOne = async(req,res) => {
     const id = req.params.id;
     try{
         const user = await User.findOne({_id:id});
-        res.json(user);
+        if(user){
+            res.json(user);
+        }
     }catch(err){
         res.json(err.message);
     }
